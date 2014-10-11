@@ -59,6 +59,7 @@ func unmarshall(msg []byte, payloadType byte, v interface{}) error {
 		reflect.ValueOf(v).Elem().Set(reflect.ValueOf(o))
 	default:
 		log.Printf("Unknown header %s\n", header)
+		log.Printf("    Body: %s\n", body)
 		err = ErrMessageUnknownHeader
 	}
 	return err
