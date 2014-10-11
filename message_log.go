@@ -19,19 +19,26 @@ type MessageLog struct {
 func NewMessageLog(messageDir string) *MessageLog {
 	var l MessageLog
 	l.dir = messageDir
+	l.logTime = logTime(time.Now())
 	l.Reset()
 	return &l
 }
 
+func logTime(n time.Time) time.Time {
+	return n.UTC().Truncate(time.Hour)
+}
+
+func logFileName(n time.Time) string {
+	return fmt.Sprintf("chat-%s.log", n.UTC().Format("2006-01-02-15"))
+}
+
 func (l *MessageLog) Reset() error {
-	n := time.Now()
-	l.logTime = time.Date(n.Year(), n.Month(), n.Day(), n.Hour(), 0, 0, 0, time.Local)
-	filename := fmt.Sprintf("chat-%s.log", time.Now().Format("2006-01-02-15"))
 	if l.log != nil {
 		l.log.Close()
 	}
-	var err error
+	filename := logFileName(l.logTime)
 	log.Printf("Recording to %s\n", filename)
+	var err error
 	l.log, err = os.OpenFile(filepath.Join(l.dir, filename), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
 	if err != nil {
 		return err
@@ -41,9 +48,10 @@ func (l *MessageLog) Reset() error {
 }
 
 func (l *MessageLog) Write(m *Msg) error {
-	hours := time.Now().Sub(l.logTime).Hours()
-	if hours >= 1 {
-		log.Printf("Log is %f hours behind, rotating\n", hours)
+	mtime := logTime(m.Timestamp.Time)
+	if !mtime.Equal(l.logTime) {
+		log.Printf("Log message time %s != logTime %s, rotating\n", mtime, l.logTime)
+		l.logTime = mtime
 		err := l.Reset()
 		if err != nil {
 			return err
@@ -53,5 +61,6 @@ func (l *MessageLog) Write(m *Msg) error {
 }
 
 func (l *MessageLog) Close() error {
+	l.encoder = nil
 	return l.log.Close()
 }

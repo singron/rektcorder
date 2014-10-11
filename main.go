@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"time"
 
 	"code.google.com/p/go.net/websocket"
 	"github.com/wsxiaoys/terminal/color"
@@ -14,6 +15,8 @@ var Config struct {
 	Sid       string
 	RecordDir string
 	Record    bool
+	Play      bool
+	Start     string
 }
 
 func init() {
@@ -22,6 +25,8 @@ func init() {
 	flag.StringVar(&Config.Sid, "sid", "", "use sid to login")
 	flag.BoolVar(&Config.Record, "record", false, "log messages for playback")
 	flag.StringVar(&Config.RecordDir, "record-dir", ".", "dir in which to log messages for playback")
+	flag.BoolVar(&Config.Play, "play", false, "playback message logs instead of listening")
+	flag.StringVar(&Config.Start, "start", "", "time to start playback")
 	flag.Parse()
 }
 
@@ -37,7 +42,7 @@ func debugf(f string, v ...interface{}) {
 	}
 }
 
-func main() {
+func listen() {
 	var wsconfig websocket.Config
 	if Config.Sid != "" {
 		wsconfig.Header.Set("Cookie", "sid="+Config.Sid)
@@ -65,7 +70,7 @@ func main() {
 		}
 		switch v := v.(type) {
 		case Msg:
-			color.Printf("<@{!b}%s@{|}>: %s\n", v.Nick, v.Data)
+			v.Print()
 			if Config.Record {
 				err = ml.Write(&v)
 				if err != nil {
@@ -91,5 +96,25 @@ func main() {
 		default:
 			log.Printf("unknown value %T %v\n", v, v)
 		}
+	}
+}
+
+func playback() {
+	p := NewPlayer(Config.RecordDir)
+	start, err := time.Parse("2006-01-02T15:04:05", Config.Start)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = p.Playback(start)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func main() {
+	if Config.Play {
+		playback()
+	} else {
+		listen()
 	}
 }

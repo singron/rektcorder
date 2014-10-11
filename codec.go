@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"code.google.com/p/go.net/websocket"
+	"github.com/wsxiaoys/terminal/color"
 )
 
 var (
@@ -66,14 +67,15 @@ func unmarshall(msg []byte, payloadType byte, v interface{}) error {
 }
 
 func marshall(v interface{}) (msg []byte, payloadType byte, err error) {
-	debugf("send msg: %v\n", v)
 	switch v.(type) {
 	case Pong:
 		b, err := json.Marshal(v)
 		if err != nil {
 			return nil, 0, err
 		}
-		return append([]byte("PONG "), b...), websocket.TextFrame, nil
+		b = append([]byte("PONG "), b...)
+		debugf("send msg: %s\n", string(b))
+		return b, websocket.TextFrame, nil
 	}
 	return nil, 0, errors.New("unknown payload type")
 }
@@ -83,6 +85,10 @@ type Msg struct {
 	Features  []string `json:"features"`
 	Timestamp Time     `json:"timestamp"`
 	Data      string   `json:"data"`
+}
+
+func (m *Msg) Print() {
+	color.Printf("<@{!b}%s@{|}>: %s\n", m.Nick, m.Data)
 }
 
 type User struct {
@@ -130,10 +136,10 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	t.Time = time.Unix(i/1000, i%1000)
+	t.Time = time.Unix(i/1000, (i%1000)*1000000)
 	return nil
 }
 
 func (t Time) MarshalJSON() ([]byte, error) {
-	return []byte(strconv.FormatInt(t.UnixNano(), 10)), nil
+	return []byte(strconv.FormatInt(t.UnixNano()/1000000, 10)), nil
 }
