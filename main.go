@@ -18,6 +18,7 @@ var Config struct {
 	Record    bool
 	Play      bool
 	Start     string
+	Silent    bool
 }
 
 func init() {
@@ -28,6 +29,7 @@ func init() {
 	flag.StringVar(&Config.RecordDir, "record-dir", ".", "dir in which to log messages for playback")
 	flag.BoolVar(&Config.Play, "play", false, "playback message logs instead of listening")
 	flag.StringVar(&Config.Start, "start", "", "time to start playback")
+	flag.BoolVar(&Config.Silent, "silent", false, "don't print messages")
 	flag.Parse()
 }
 
@@ -83,7 +85,9 @@ func listen() {
 		}
 		switch v := v.(type) {
 		case Msg:
-			v.Print()
+			if !Config.Silent {
+				v.Print()
+			}
 			if Config.Record {
 				err = ml.Write(&v)
 				if err != nil {
