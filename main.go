@@ -103,7 +103,13 @@ func playback() {
 	p := NewPlayer(Config.RecordDir)
 	start, err := time.Parse("2006-01-02T15:04:05", Config.Start)
 	if err != nil {
-		log.Fatal(err)
+		debugf("%s isn't a date, trying twitch\n", Config.Start)
+		var t Twitch
+		v, err := t.Video(Config.Start)
+		if err != nil {
+			log.Fatal(err)
+		}
+		start = v.RecordedAt.UTC()
 	}
 	err = p.Playback(start)
 	if err != nil {
