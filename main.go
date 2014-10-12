@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io"
 	"log"
 	"time"
 
@@ -42,15 +43,22 @@ func debugf(f string, v ...interface{}) {
 	}
 }
 
-func listen() {
+func connect() *websocket.Conn {
 	var wsconfig websocket.Config
 	if Config.Sid != "" {
 		wsconfig.Header.Set("Cookie", "sid="+Config.Sid)
 	}
-	ws, err := websocket.Dial("ws://www.destiny.gg:9998/ws", "", "http://www.destiny.gg")
-	if err != nil {
-		log.Fatal(err)
+	for {
+		log.Printf("Connecting...\n")
+		ws, err := websocket.Dial("ws://www.destiny.gg:9998/ws", "", "http://www.destiny.gg")
+		if err == nil {
+			return ws
+		}
 	}
+}
+
+func listen() {
+	ws := connect()
 	defer func() {
 		err := ws.Close()
 		if err != nil {
@@ -64,8 +72,13 @@ func listen() {
 	}
 	for {
 		var v interface{}
-		err = Codec.Receive(ws, &v)
-		if err != nil {
+		err := Codec.Receive(ws, &v)
+		if err == io.EOF {
+			ws.Close()
+			debugf("EOF, Reconnect\n")
+			ws = connect()
+			continue
+		} else if err != nil {
 			log.Fatal(err)
 		}
 		switch v := v.(type) {
