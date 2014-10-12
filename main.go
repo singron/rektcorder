@@ -110,6 +110,10 @@ func listen() {
 			if Config.Joins {
 				color.Printf("@{/}* %s quit@{|}\n", v.Nick)
 			}
+		case Broadcast:
+			if Config.Joins {
+				color.Printf("@{/}* %s@{|}\n", v.Data)
+			}
 		default:
 			log.Printf("unknown value %T %v\n", v, v)
 		}

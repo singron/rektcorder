@@ -58,6 +58,10 @@ func unmarshall(msg []byte, payloadType byte, v interface{}) error {
 		var o Mute
 		err = json.Unmarshal(body, &o)
 		reflect.ValueOf(v).Elem().Set(reflect.ValueOf(o))
+	case "BROADCAST":
+		var o Broadcast
+		err = json.Unmarshal(body, &o)
+		reflect.ValueOf(v).Elem().Set(reflect.ValueOf(o))
 	default:
 		log.Printf("Unknown header %s\n", header)
 		log.Printf("    Body: %s\n", body)
@@ -125,6 +129,11 @@ type Mute struct {
 	Features  []string `json:"features"`
 	Timestamp Time     `json:"timestamp"`
 	Data      string   `json:"data"` // the nick to mute
+}
+
+type Broadcast struct {
+	Timestamp Time   `json:"timestamp"`
+	Data      string `json:"data"`
 }
 
 type Time struct {
