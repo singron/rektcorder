@@ -1,4 +1,4 @@
-//destiny is a recorder and player for destiny.gg chat logs
+//rektcorder is a recorder and player for destiny.gg chat logs
 //Copyright (C) 2013 Eric Culp
 //
 //This program is free software: you can redistribute it and/or modify
