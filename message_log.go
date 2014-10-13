@@ -54,7 +54,7 @@ func (l *MessageLog) Reset() error {
 	filename := logFileName(l.logTime)
 	log.Printf("Recording to %s\n", filename)
 	var err error
-	l.log, err = os.OpenFile(filepath.Join(l.dir, filename), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
+	l.log, err = os.OpenFile(filepath.Join(l.dir, filename), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return err
 	}
