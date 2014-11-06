@@ -34,6 +34,7 @@ var Config struct {
 	Play      bool
 	Start     string
 	Silent    bool
+	Timeout   time.Duration
 }
 
 func init() {
@@ -45,6 +46,8 @@ func init() {
 	flag.BoolVar(&Config.Play, "play", false, "playback message logs instead of listening")
 	flag.StringVar(&Config.Start, "start", "", "time to start playback")
 	flag.BoolVar(&Config.Silent, "silent", false, "don't print messages")
+	flag.DurationVar(&Config.Timeout, "timeout", time.Duration(30)*time.Second,
+		"panic after no messages have been received for this long")
 	flag.Parse()
 }
 
@@ -74,6 +77,10 @@ func connect() *websocket.Conn {
 	}
 }
 
+func timeout() {
+	panic("Chat timed out")
+}
+
 func listen() {
 	ws := connect()
 	defer func() {
@@ -87,6 +94,7 @@ func listen() {
 		ml = NewMessageLog(Config.RecordDir)
 		defer ml.Close()
 	}
+	timer := time.AfterFunc(Config.Timeout, timeout)
 	for {
 		var v interface{}
 		err := Codec.Receive(ws, &v)
@@ -98,6 +106,7 @@ func listen() {
 		} else if err != nil {
 			log.Fatal(err)
 		}
+		timer.Reset(Config.Timeout)
 		switch v := v.(type) {
 		case Msg:
 			if !Config.Silent {
