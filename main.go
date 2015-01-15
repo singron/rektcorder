@@ -103,6 +103,10 @@ func listen() {
 			debugf("EOF, Reconnect\n")
 			ws = connect()
 			continue
+		} else if err == ErrMessageUnknownHeader {
+			continue
+		} else if err == ErrMessageNoHeader {
+			continue
 		} else if err != nil {
 			log.Fatal(err)
 		}
